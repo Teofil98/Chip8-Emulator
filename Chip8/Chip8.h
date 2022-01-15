@@ -1,5 +1,7 @@
 #pragma once
 #include<stdint.h>
+#include<stdlib.h>
+#include<time.h>
 #include<iostream>
 class Chip8
 {
@@ -20,6 +22,11 @@ private:
 
     //stack
     uint16_t stack[16];
+
+    //screen
+    //32 = 4 * 8
+    //64 = 8 * 8
+    uint8_t screen[32][8];
 
     //instructions
     //not used
