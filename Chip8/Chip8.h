@@ -3,6 +3,8 @@
 #include<stdlib.h>
 #include<time.h>
 #include<iostream>
+
+
 class Chip8
 {
 public:
@@ -11,7 +13,26 @@ public:
 
 private:
     //4kb of memory
-    uint8_t mem[4 * 1024] = {0};
+    //Set the first 5 * 16 bytes in the interpreter memory (0x000 -> 0x1FF) to be the digit sprites
+    uint8_t mem[4 * 1024] = {
+        0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+        0x20, 0x60, 0x20, 0x20, 0x70, // 1
+        0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+        0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+        0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+        0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+        0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+        0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+        0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+        0XF0, 0x90, 0xF0, 0x10, 0x10, // 9
+        0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+        0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+        0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+        0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+        0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+        0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+
+    };
 
     //registers
     uint8_t V[16] = { 0 };
@@ -45,12 +66,12 @@ private:
     void JP_REL(uint16_t addr); void RND(uint8_t reg_idx, uint8_t val);
     void DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes);
     void SKP(uint8_t reg_idx); void SKNP(uint8_t reg_idx);
-    void LD_DT(uint8_t reg_idx); void LD_K(uint8_t value); void SET_DT(uint8_t reg_idx);
+    void LD_DT(uint8_t reg_idx); void LD_KEY(uint8_t reg_idx); void SET_DT(uint8_t reg_idx);
     void SET_ST(uint8_t reg_idx); void ADD_I(uint8_t reg_idx); void SET_DIGIT(uint8_t reg_idx);
     void SET_BCD(uint8_t reg_idx); void STORE_REGS(uint8_t reg_idx); void LOAD_REGS(uint8_t reg_idx);
 
-
-    //TODO: Set SP = 0 in init function
+    uint8_t getPressedKey();
+    uint8_t requestKeyPress();
 
 
 };

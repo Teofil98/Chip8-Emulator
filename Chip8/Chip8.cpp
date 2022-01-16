@@ -193,16 +193,15 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
     uint8_t curr_col = V[reg1_idx];
     uint8_t curr_row = V[reg2_idx];
 
-    uint8_t x_lelftover = 0;
+    bool wrap_around = false;
     if (V[reg1_idx] + 8 > 63)
     {
-       x_lelftover = (V[reg1_idx] + 8) - 63;
+        wrap_around = true;
     }
 
+    V[0x0F] = 0;
     for (uint8_t i = 0; i < nbytes; i++)
     {
-        //uint8_t x_lelftover = 0;
-        //uint8_t y_lelftover = 0;
         //read byte at address specified in I
         uint8_t byte = mem[I + i];
 
@@ -211,44 +210,118 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
             curr_row = 0;
         }
 
-        if (x_lelftover > 0)
-        {
+        //get current byte at this position on screen
 
+        uint8_t draw_byte_high;
+        uint8_t draw_byte_low;
+
+        uint8_t offset = curr_col % 8;
+        draw_byte_high = byte >> offset;
+        draw_byte_low = byte << (8 - offset);
+
+        //if we have to wrap around, byte to the right of written value is on column 0
+        uint8_t screen_low_byte_col;
+
+        if (wrap_around)
+        {
+            screen_low_byte_col = 0;
         }
         else {
-            //get current byte at this position on screen
-
-            uint8_t draw_byte_high;
-            uint8_t draw_byte_low;
-
-            uint8_t offset = curr_col % 8;
-            draw_byte_high = byte >> offset;
-            draw_byte_low = byte << (8 - offset);
-
-            uint8_t overlap_byte_high = screen[curr_row][curr_col / 8];
-            uint8_t overlap_byte_low = screen[curr_row][curr_col / 8 + offset > 0 ? 1 : 0];
-
-
+            screen_low_byte_col = curr_col / 8 + (offset > 0 ? 1 : 0);
         }
 
-        ////check if sprite is outsite on the x axis
-        //if (V[reg1_idx] + 8 > 63)
-        //{
-        //    x_lelftover = (V[reg1_idx] + 8) - 63;
-        //}
+        uint8_t overlap_byte_high = screen[curr_row][curr_col / 8];
+        uint8_t overlap_byte_low = screen[curr_row][screen_low_byte_col];
 
-        ////check if sprite is outsite on the y axis
-        //if (V[reg2_idx] + nbytes > 31)
-        //{
-        //    y_lelftover = (V[reg2_idx] + nbytes) - 31;
-        //}
+        //determine if bits are going to be flipped when we XOR and set flag
+        if ((draw_byte_high & overlap_byte_high) || (draw_byte_low & overlap_byte_low))
+        {
+            V[0x0F] = 1;
+        }
 
-        ////draw non-colision lines
-        //for (uint8_t line = V[reg2_idx]; line < (V[reg2_idx] + nbytes - y_lelftover); line++)
-        //{
-        //    //draw lines 
+        //XOR the values
+        screen[curr_row][curr_col / 8] = overlap_byte_high ^ draw_byte_high;
+        screen[curr_row][screen_low_byte_col] = overlap_byte_low ^ draw_byte_low;
+    }
 
-        //}
+}
+
+void Chip8::SKP(uint8_t reg_idx)
+{
+    if (V[reg_idx] == getPressedKey())
+    {
+        PC += 2;
+    }
+}
+
+void Chip8::SKNP(uint8_t reg_idx)
+{
+    if (V[reg_idx] != getPressedKey())
+    {
+        PC += 2;
+    }
+}
+
+void Chip8::LD_DT(uint8_t reg_idx)
+{
+    V[reg_idx] = DT;
+}
+
+void Chip8::LD_KEY(uint8_t reg_idx)
+{
+    V[reg_idx] = requestKeyPress();
+}
+
+void Chip8::SET_DT(uint8_t reg_idx)
+{
+    DT = V[reg_idx];
+}
+
+void Chip8::SET_ST(uint8_t reg_idx)
+{
+    ST = V[reg_idx];
+}
+
+void Chip8::ADD_I(uint8_t reg_idx)
+{
+    I += V[reg_idx];
+}
+
+void Chip8::SET_DIGIT(uint8_t reg_idx)
+{
+    //set I to location of sprite for digit in V[reg_idx]
+    I = V[reg_idx] * 5;
+}
+
+void Chip8::SET_BCD(uint8_t reg_idx)
+{
+    uint8_t aux = V[reg_idx];
+
+    //ones place
+    mem[I + 2] = aux % 10;
+    aux /= 10;
+
+    //tens place
+    mem[I + 1] = aux % 10;
+    aux /= 10;
+
+    //hundreds place
+    mem[I] = aux;
+}
+
+void Chip8::STORE_REGS(uint8_t reg_idx)
+{
+    for (uint8_t i = 0; i < reg_idx; i++)
+    {
+        mem[I + i] = V[i];
+    }
+}
+
+void Chip8::LOAD_REGS(uint8_t reg_idx)
+{
+    for (uint8_t i = 0; i < reg_idx; i++)
+    {
+        V[i] = mem[I + i];
     }
 }
 
