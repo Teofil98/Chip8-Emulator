@@ -16,7 +16,8 @@ void Chip8::SYS(uint16_t addr)
 
 void Chip8::CLS()
 {
-    //TODO: Clear the display once graphics are working
+    //set display to 0
+    memset(screen, 0x00, 32 * 8);
 }
 
 //WARNING: Changed spec, if something doesn't work, check here 
@@ -325,10 +326,15 @@ void Chip8::LOAD_REGS(uint8_t reg_idx)
     }
 }
 
-int main()
+uint8_t Chip8::getPressedKey()
 {
-
-    //TODO: Put main in appropriate place
-
+    //TODO: Implement
     return 0;
 }
+
+uint8_t Chip8::requestKeyPress()
+{
+    //TODO: Implement
+    return 0;
+}
+

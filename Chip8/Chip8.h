@@ -11,6 +11,8 @@ public:
     //constructor
     Chip8();
 
+    bool runInstructionTests(bool verbose);
+
 private:
     //4kb of memory
     //Set the first 5 * 16 bytes in the interpreter memory (0x000 -> 0x1FF) to be the digit sprites
@@ -72,6 +74,10 @@ private:
 
     uint8_t getPressedKey();
     uint8_t requestKeyPress();
+
+
+    //Tests
+    bool testCLS(bool verbose);
 
 
 };
