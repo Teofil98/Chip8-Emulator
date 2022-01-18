@@ -29,7 +29,7 @@ void Chip8::RET()
     }
 }
 
-void Chip8::JP(uint16_t addr)
+void Chip8::JMP(uint16_t addr)
 {
     PC = addr;
 }

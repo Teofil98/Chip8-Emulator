@@ -56,7 +56,7 @@ private:
     void SYS(uint16_t addr);
 
 
-    void CLS(); void RET(); void JP(uint16_t addr); void CALL(uint16_t addr); 
+    void CLS(); void RET(); void JMP(uint16_t addr); void CALL(uint16_t addr); 
     void SE_IMM(uint8_t reg_idx, uint8_t imm); void SNE_IMM(uint8_t reg_idx, uint8_t imm); 
     void SE(uint8_t reg1_idx, uint8_t reg2_idx); void LD_IMM(uint8_t reg_idx, uint8_t imm);
     void ADD_IMM(uint8_t reg_idx, uint8_t imm);  void LD(uint8_t reg1_idx, uint8_t reg2_idx);
@@ -78,7 +78,12 @@ private:
 
     //Tests
     bool testCLS(bool verbose);
-
+    bool testRET(bool verbose);
+    bool testJMP(bool verbose);
+    bool testCALL(bool verbose);
+    bool testSE_IMM(bool verbose); 
+    bool testSNE_IMM(bool verbose);
+    bool testSE(bool verbose);
 
 };
 
