@@ -84,6 +84,11 @@ private:
     bool testSE_IMM(bool verbose); 
     bool testSNE_IMM(bool verbose);
     bool testSE(bool verbose);
-
+    bool testLD_IMM(bool verbose);
+    bool testADD_IMM(bool verbose);
+    bool testLD(bool verbose);
+    bool testOR(bool verbose);
+    bool testAND(bool verbose);
+    bool testXOR(bool verbose);
 };
 

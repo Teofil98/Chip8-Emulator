@@ -76,6 +76,7 @@ void Chip8::LD_IMM(uint8_t reg_idx, uint8_t imm)
 
 void Chip8::ADD_IMM(uint8_t reg_idx, uint8_t imm)
 {
+    //Online specification says that carry flag is NOT changed
     V[reg_idx] += imm;
 }
 
