@@ -163,7 +163,7 @@ void Chip8::SHL(uint8_t reg_idx)
         V[0x0F] = 0;
     }
 
-    V[reg_idx] <<= 2;
+    V[reg_idx] <<= 1;
 }
 
 void Chip8::SNE(uint8_t reg1_idx, uint8_t reg2_idx)
@@ -179,7 +179,7 @@ void Chip8::LD_I(uint16_t addr)
     I = addr;
 }
 
-void Chip8::JP_REL(uint16_t addr)
+void Chip8::JMP_REL(uint16_t addr)
 {
     PC = addr + V[0];
 }
@@ -240,10 +240,20 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
         {
             V[0x0F] = 1;
         }
+        else
+        {
+            V[0x0F] = 0;
+        }
 
         //XOR the values
         screen[curr_row][curr_col / 8] = overlap_byte_high ^ draw_byte_high;
-        screen[curr_row][screen_low_byte_col] = overlap_byte_low ^ draw_byte_low;
+
+        if (offset != 0)
+        {
+            screen[curr_row][screen_low_byte_col] = overlap_byte_low ^ draw_byte_low;
+        }
+
+        curr_row++;
     }
 
 }
@@ -338,4 +348,38 @@ uint8_t Chip8::requestKeyPress()
     //TODO: Implement
     return 0;
 }
+
+char* byteToString(uint8_t byte)
+{
+    char* str_rep = (char*)malloc(9 * sizeof(char));
+
+    if (str_rep == NULL)
+    {
+        printf("Error allocating string representation of screent");
+        return NULL;
+    }
+
+    for (int i = 0; i < 8; i++)
+    {
+        str_rep[i] = ((byte & 0x80) >> 7) == 1 ? '*' : '-';
+        byte <<= 1;
+    }
+    str_rep[8] = 0;
+
+    return str_rep;
+}
+
+void Chip8::printScreen()
+{
+    for (int i = 0; i < SCREEN_H; i++)
+    {
+        for (int j = 0; j < SCREEN_W; j++)
+        {
+            //printf("0x%X ", screen[i][j]);
+            printf("%s", byteToString(screen[i][j]));
+        }
+        printf("\n");
+    }
+}
+
 

@@ -89,9 +89,12 @@ bool Chip8::testJMP(bool verbose)
         passed = false;
         if (verbose)
         {
-            printf(" > JMP instructioon doesn't set the PC counter correctly");
+            printf(" > JMP instruction doesn't set the PC counter correctly");
         }
     }
+
+    //restore state
+    PC = oldPC;
 
     return passed;
 }
@@ -211,7 +214,7 @@ bool Chip8::testSNE_IMM(bool verbose)
         passed = false;
         if (verbose)
         {
-            printf(" > SNE instruction with immediate value increments the PC when the values are not equal.\n");
+            printf(" > SNE instruction with immediate value increments the PC when the values are equal.\n");
         }
     }
 
@@ -287,7 +290,6 @@ bool Chip8::testLD_IMM(bool verbose)
 
     return passed;
 }
-
 
 bool Chip8::testADD_IMM(bool verbose)
 {
@@ -385,6 +387,7 @@ bool Chip8::testOR(bool verbose)
     return passed;
 
 }
+
 bool Chip8::testAND(bool verbose)
 {
     bool passed = true;
@@ -410,6 +413,7 @@ bool Chip8::testAND(bool verbose)
 
     return passed;
 }
+
 bool Chip8::testXOR(bool verbose)
 {
     bool passed = true;
@@ -436,9 +440,638 @@ bool Chip8::testXOR(bool verbose)
     return passed;
 }
 
+bool Chip8::testADD(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[2];
+    uint8_t oldVy = V[3];
+    uint8_t oldVf = V[0x0F];
+
+
+    V[2] = 0x23;
+    V[3] = 0x12;
+    V[0x0F] = 0;
+
+    ADD(2, 3);
+
+    if (V[2] != (0x35))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > ADD instruction doesn't set the correct value of VX.\n");
+        }
+    }
+
+    if (V[0xF] != 0)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > ADD instruction sets the carry flag when it shouldn't.\n");
+        }
+    }
+
+    V[2] = 0xFF;
+    V[3] = 0x01;
+    V[0x0F] = 0;
+
+    ADD(2, 3);
+
+    if (V[2] != (0x00))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > ADD instruction doesn't set the correct value of VX.\n");
+        }
+    }
+
+    if (V[0xF] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > ADD instruction doesn't set the carry flag .\n");
+        }
+    }
+
+    //restore state
+    V[2] = oldVx;
+    V[3] = oldVy;
+    V[0x0F] = oldVf;
+
+    return passed;
+}
+
+bool Chip8::testSUB(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[2];
+    uint8_t oldVy = V[3];
+    uint8_t oldVf = V[0x0F];
+
+
+    V[2] = 0x12;
+    V[3] = 0x23;
+    V[0x0F] = 0;
+
+    SUB(2, 3);
+
+    if (V[2] != (0xEF))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction doesn't set the correct value of VX.\n");
+        }
+    }
+
+    if (V[0xF] != 0)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction sets the NOT borrow flag when it shouldn't.\n");
+        }
+    }
+
+    V[2] = 0x23;
+    V[3] = 0x12;
+    V[0x0F] = 0;
+
+    SUB(2, 3);
+
+    if (V[2] != (0x11))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction doesn't set the correct value of VX.\n");
+        }
+    }
+
+    if (V[0xF] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction doesn't set the NOT borrow flag.\n");
+        }
+    }
+
+    //restore state
+    V[2] = oldVx;
+    V[3] = oldVy;
+    V[0x0F] = oldVf;
+
+    return passed;
+}
+
+bool Chip8::testSHR(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[2];
+    uint8_t oldVF = V[0x0F];
+
+    V[2] = 0x42;
+    V[0x0F] = 0;
+
+    SHR(2);
+
+    if (V[2] != 0x21)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHR doesn't set the correct value in Vx.\n");
+        }
+    }
+
+    if (V[0x0F] != 0)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHR sets the VF flag when it shouldn't.\n");
+        }
+    }
+
+    V[2] = 0xF5;
+    V[0x0F] = 0;
+
+    SHR(2);
+
+    if (V[2] != 0x7A)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHR doesn't set the correct value in Vx.\n");
+        }
+    }
+
+    if (V[0x0F] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHR doesn't set the VF flag.\n");
+        }
+    }
+
+    // restore state
+    V[2] = oldVx;
+    V[0x0F] = oldVF;
+
+    return passed;
+}
+
+bool Chip8::testSUBN(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[2];
+    uint8_t oldVy = V[3];
+    uint8_t oldVf = V[0x0F];
+
+
+    V[2] = 0x23;
+    V[3] = 0x12;
+    
+    V[0x0F] = 0;
+
+    SUBN(2, 3);
+
+    if (V[2] != (0xEF))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction doesn't set the correct value of VX.\n");
+        }
+    }
+
+    if (V[0xF] != 0)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction sets the NOT borrow flag when it shouldn't.\n");
+        }
+    }
+
+    V[2] = 0x12;
+    V[3] = 0x23;
+    V[0x0F] = 0;
+
+    SUBN(2, 3);
+
+    if (V[2] != (0x11))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUB instruction doesn't set the correct value of VX.\n");
+        }
+    }
+
+    if (V[0xF] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SUBN instruction doesn't set the NOT borrow flag.\n");
+        }
+    }
+
+    //restore state
+    V[2] = oldVx;
+    V[3] = oldVy;
+    V[0x0F] = oldVf;
+
+    return passed;
+}
+
+bool Chip8::testSHL(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[2];
+    uint8_t oldVF = V[0x0F];
+
+    V[2] = 0x42;
+    V[0x0F] = 0;
+
+    SHL(2);
+
+    if (V[2] != 0x84)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHL doesn't set the correct value in Vx.\n");
+        }
+    }
+
+    if (V[0x0F] != 0)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHL sets the VF flag when it shouldn't.\n");
+        }
+    }
+
+    V[2] = 0xF5;
+    V[0x0F] = 0;
+
+    SHL(2);
+
+    if (V[2] != 0xEA)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHL doesn't set the correct value in Vx.\n");
+        }
+    }
+
+    if (V[0x0F] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SHL doesn't set the VF flag.\n");
+        }
+    }
+
+    // restore state
+    V[2] = oldVx;
+    V[0x0F] = oldVF;
+
+    return passed;
+}
+
+bool Chip8::testSNE(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldPC = PC;
+    uint8_t oldVx = V[0];
+    uint8_t oldVy = V[1];
+
+    V[0] = 0x80;
+    V[1] = 0x90;
+
+    SNE(0, 1);
+
+    if (PC != (oldPC + 2))
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SNE instruction does not increment the PC correctly.\n");
+        }
+    }
+
+    PC = oldPC;
+    V[1] = 0x80;
+
+    SNE(0, 1);
+
+    if (PC != oldPC)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > SNE instruction increments the PC when the values are equal.\n");
+        }
+    }
+
+    PC = oldPC;
+    V[0] = oldVx;
+    V[1] = oldVy;
+
+    return passed;
+}
+
+bool Chip8::testLD_I(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldI = I;
+    
+    I = 0;
+ 
+    LD_I(0x0647);
+
+    if (I != 0x0647)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > Load value into I instruction does not set correct value for I.\n");
+        }
+    }
+
+    //restore state
+    I = oldI;
+
+    return passed;
+}
+
+bool Chip8::testJMP_REL(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldPC = PC;
+    uint8_t oldV0 = V[0];
+
+    V[0] = 0x13;
+    uint16_t addr = 0x05B1;
+
+    JMP_REL(addr);
+
+    if (PC != 0x5C4)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > JMP instruction relative doesn't set the PC counter correctly.\n");
+        }
+    }
+
+
+    //restore state
+    PC = oldPC;
+    V[0] = oldV0;
+
+    return passed;
+}
+
+bool Chip8::testRND(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[4];
+
+    uint8_t mask = 0xFF;
+
+    RND(4, mask);
+    uint8_t rand1 = V[4];
+
+    RND(4, mask);
+    uint8_t rand2 = V[4];
+
+    if (rand1 == rand2)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > RND instruction doesn't generate 2 different numbers.\n");
+        }
+    }
+
+    mask = 0x00;
+
+    RND(4, mask);
+    rand1 = V[4];
+
+    if (rand1 != 0x00)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > RND instruction doesn't AND with the argument correctly.\n");
+        }
+    }
+
+    //restore state
+    V[4] = oldVx;
+
+    return passed;
+}
+
+bool Chip8::testSET_DIGIT(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[0];
+    uint16_t oldI = I;
+
+    V[0] = 0x0;
+    SET_DIGIT(0);
+
+    if (I != 0x0000)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > Load digit sprite address into I doesn't set the correct value\n");
+        }
+    }
+
+    V[0] = 0xB;
+    SET_DIGIT(0);
+
+    if (I != 0x0037)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > Load digit sprite address into I doesn't set the correct value\n");
+        }
+    }
+
+    //restore state
+    I = oldI;
+    V[0] = oldVx;
+
+    return passed;
+}
+
+bool Chip8::testDRW(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldVx = V[0];
+    uint8_t oldVy = V[1];
+    uint16_t oldI = I;
+
+    V[0] = 0X7;
+
+    SET_DIGIT(0);
+
+    //set coords to fit at byte allignment
+
+    //column
+    V[0] = 32;
+    //row
+    V[1] = 16;
+
+    CLS();
+
+   
+    DRW(0, 1, 5);
+    if (verbose)
+    {
+        printf("Draw a sprite on the screen\n");
+        printScreen();
+    }
+
+    if (V[0xF] != 0)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > DRW instruction sets overlap flag when it shouldn't\n");
+        }
+    }
+
+    //set another digit to test overlap
+    V[0] = 0xA;
+    SET_DIGIT(0);
+
+    //column 
+    V[0] = 34;
+    //row
+    V[1] = 14;
+
+    
+    DRW(0, 1, 5);
+    if (verbose)
+    {
+        printf("Draw anoter sprite to check for overlap\n");
+        printScreen();
+    }
+    
+    if (V[0xF] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > DRW instruction doesn't set overlap flag\n");
+        }
+    }
+
+    CLS();
+
+    //test wraparound on rows
+    V[0] = 0x4;
+    SET_DIGIT(0);
+
+    //column
+    V[0] = 32;
+    //row
+    V[1] = 30;
+
+   
+    DRW(0, 1, 5);
+
+    if (verbose)
+    {
+        printf("Test wraparound on rows.\n");
+        printScreen();
+    }
+    //test wraparound on columns
+    CLS();
+    //column
+    V[0] = 62;
+    //row
+    V[1] = 16;
+   
+    DRW(0, 1, 5);
+
+    if (verbose)
+    {
+        printf("Test wraparound on columns.\n");
+        printScreen();
+    }
+
+    //test wraparound on rows and columns
+    CLS();
+    //column
+    V[0] = 62;
+    //row
+    V[1] = 30;
+
+    
+    DRW(0, 1, 5);
+
+    if (verbose)
+    {
+        printf("Test wraparound on rows and columns columns.\n");
+        printScreen();
+    }
+
+    CLS();
+
+    //restore state
+    V[0] = oldVx;
+    V[1] = oldVy;
+    I = oldI;
+
+    return passed;
+}
+
 bool Chip8::runInstructionTests(bool verbose = false)
 {
-    const uint8_t totalTests = 13;
+    const uint8_t totalTests = 35;
     uint8_t testsPassed = 0;
 
     if (testCLS(verbose))
@@ -558,6 +1191,106 @@ bool Chip8::runInstructionTests(bool verbose = false)
         printf("[FAIL] XOR {8xy3} - xor instruction test.\n");
     }
 
+    if (testADD(verbose))
+    {
+        printf("[PASS] ADD {8xy4} - add instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] ADD {8xy4} - add instruction test.\n");
+    }
+
+    if (testSUB(verbose))
+    {
+        printf("[PASS] SUB {8xy5} - sub instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SUB {8xy5} - sub instruction test.\n");
+    }
+
+    if (testSHR(verbose))
+    {
+        printf("[PASS] SHR {8xy6} - shift right instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SHR {8xy6} - shift right instruction test.\n");
+    }
+
+    if (testSUBN(verbose))
+    {
+        printf("[PASS] SUBN {8xy7} - subn instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SUBN {8xy7} - subn instruction test.\n");
+    }
+
+    if (testSHL(verbose))
+    {
+        printf("[PASS] SHL {8xyE} - shift left instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SHL {8xyE} - shift left instruction test.\n");
+    }
+
+    if (testSNE(verbose))
+    {
+        printf("[PASS] SNE {9xy0} - skip if not equal instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SNE {9xy0} - skip if not equal instruction test.\n");
+    }
+
+    if (testLD_I(verbose))
+    {
+        printf("[PASS] LD {Annn} - Load into I instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Annn} - Load into I instruction test.\n");
+    }
+
+    if (testJMP_REL(verbose))
+    {
+        printf("[PASS] JMP {Bnnn} - Jump relative instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL]  JMP {Bnnn} - Jump relative instruction test.\n");
+    }
+
+    if (testRND(verbose))
+    {
+        printf("[PASS] RND {Cxkk} - 'random' instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL]  RND {Cxkk} - 'random' instruction test.\n");
+    }
+
+    if (testDRW(verbose))
+    {
+        printf("[PASS] DRW {Dxyn} - draw instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL]  DRW {Dxyn} - draw  instruction test.\n");
+    }
+
+    if (testSET_DIGIT(verbose))
+    {
+        printf("[PASS] LD {Fx33} - load digit sprite address into I instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL]  LD {Fx33} - load digit sprite address into I instruction test.\n");
+    }
+
+   
     printf("Tests passed: %d/%d\n", testsPassed, totalTests);
 
     return (testsPassed == totalTests);

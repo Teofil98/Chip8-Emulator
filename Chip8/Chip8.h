@@ -4,6 +4,8 @@
 #include<time.h>
 #include<iostream>
 
+#define SCREEN_W 8
+#define SCREEN_H 32
 
 class Chip8
 {
@@ -65,7 +67,7 @@ private:
     void SUB(uint8_t reg1_idx, uint8_t reg2_idx); void SHR(uint8_t reg_idx); //Maybe also needs an optional param?
     void SUBN(uint8_t reg1_idx, uint8_t reg2_idx);  void SHL(uint8_t reg_idx); //Maybe also needs an optional param?
     void SNE(uint8_t reg1_idx, uint8_t reg2_idx); void LD_I(uint16_t addr);
-    void JP_REL(uint16_t addr); void RND(uint8_t reg_idx, uint8_t val);
+    void JMP_REL(uint16_t addr); void RND(uint8_t reg_idx, uint8_t val);
     void DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes);
     void SKP(uint8_t reg_idx); void SKNP(uint8_t reg_idx);
     void LD_DT(uint8_t reg_idx); void LD_KEY(uint8_t reg_idx); void SET_DT(uint8_t reg_idx);
@@ -74,7 +76,7 @@ private:
 
     uint8_t getPressedKey();
     uint8_t requestKeyPress();
-
+    void printScreen();
 
     //Tests
     bool testCLS(bool verbose);
@@ -90,5 +92,17 @@ private:
     bool testOR(bool verbose);
     bool testAND(bool verbose);
     bool testXOR(bool verbose);
+    bool testADD(bool verbose);
+    bool testSUB(bool verbose);
+    bool testSHR(bool verbose);
+    bool testSUBN(bool verbose);
+    bool testSHL(bool verbose);
+    bool testSNE(bool verbose);
+    bool testLD_I(bool verbose);
+    bool testJMP_REL(bool verbose); 
+    bool testRND(bool verbose);
+    bool testDRW(bool verbose);
+
+    bool testSET_DIGIT(bool verbose);
 };
 
