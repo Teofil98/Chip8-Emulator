@@ -1,4 +1,5 @@
 #include "Chip8.h"
+#include <fstream>
 
 Chip8::Chip8()
 {
@@ -260,7 +261,7 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
 
 void Chip8::SKP(uint8_t reg_idx)
 {
-    if (V[reg_idx] == getPressedKey())
+    if (keyEvent == KEY_PRESSED_EVENT && V[reg_idx] == pressedKey)
     {
         PC += 2;
     }
@@ -268,7 +269,7 @@ void Chip8::SKP(uint8_t reg_idx)
 
 void Chip8::SKNP(uint8_t reg_idx)
 {
-    if (V[reg_idx] != getPressedKey())
+    if (keyEvent == KEY_PRESSED_EVENT && V[reg_idx] != pressedKey)
     {
         PC += 2;
     }
@@ -279,9 +280,16 @@ void Chip8::LD_DT(uint8_t reg_idx)
     V[reg_idx] = DT;
 }
 
-void Chip8::LD_KEY(uint8_t reg_idx)
+bool Chip8::LD_KEY(uint8_t reg_idx)
 {
-    V[reg_idx] = requestKeyPress();
+    // only on release so as not to bleed key press into next frame
+    if (keyEvent == KEY_RELEASED_EVENT)
+    {
+        V[reg_idx] = pressedKey;
+        return true;
+    }
+
+    return false;
 }
 
 void Chip8::SET_DT(uint8_t reg_idx)
@@ -323,7 +331,7 @@ void Chip8::SET_BCD(uint8_t reg_idx)
 
 void Chip8::STORE_REGS(uint8_t reg_idx)
 {
-    for (uint8_t i = 0; i < reg_idx; i++)
+    for (uint8_t i = 0; i <= reg_idx; i++)
     {
         mem[I + i] = V[i];
     }
@@ -331,22 +339,10 @@ void Chip8::STORE_REGS(uint8_t reg_idx)
 
 void Chip8::LOAD_REGS(uint8_t reg_idx)
 {
-    for (uint8_t i = 0; i < reg_idx; i++)
+    for (uint8_t i = 0; i <= reg_idx; i++)
     {
         V[i] = mem[I + i];
     }
-}
-
-uint8_t Chip8::getPressedKey()
-{
-    //TODO: Implement
-    return 0;
-}
-
-uint8_t Chip8::requestKeyPress()
-{
-    //TODO: Implement
-    return 0;
 }
 
 char* byteToString(uint8_t byte)
@@ -375,11 +371,139 @@ void Chip8::printScreen()
     {
         for (int j = 0; j < SCREEN_W; j++)
         {
+            char* s = byteToString(screen[i][j]);
             //printf("0x%X ", screen[i][j]);
-            printf("%s", byteToString(screen[i][j]));
+            printf("%s", s);
+            free(s);
         }
         printf("\n");
     }
 }
 
+void Chip8::loadROM(const char* path)
+{
+    std::ifstream rom (path);
+   
+    if (!rom)
+    {
+        printf("Error! The ROM does not exist!\n");
+        return;
+    }
 
+    //get rom length
+    rom.seekg(0, std::ios::end);
+    size_t length = rom.tellg();
+    rom.seekg(0, std::ios::beg);
+
+    //read rom in memory
+    rom.read((char*)(mem + 0x200), length);
+}
+
+void Chip8::clock()
+{
+    instruction i;
+    bool incrementPC = true;
+
+    //fetch instruction
+    i.bytes[0] = mem[PC];
+    i.bytes[1] = mem[PC + 1];
+
+    //decode instruction
+    uint8_t opcode = (i.instr & 0xF000) >> 12;
+    uint8_t tail_opcode = (i.instr & 0x000F);
+    uint8_t x = (i.instr & 0x0F00) >> 8;
+    uint8_t y = (i.instr & 0x00F0) >> 4;
+    uint8_t nnn = (i.instr & 0x0FFF);
+
+    //execute instruction
+    switch (opcode)
+    {
+    case 0:
+        if (i.instr == 0x00E0)
+        {
+            CLS();
+        }
+        else if (i.instr == 0x00EE)
+        {
+            RET();
+        }
+        else {
+            SYS(nnn);
+        }
+        break;
+    case 1:
+        JMP(nnn);
+        break;
+    case 2:
+        CALL(nnn);
+        break;
+    case 3:
+        SE_IMM(x, i.bytes[1]);
+        break;
+    case 4:
+        SNE_IMM(x, i.bytes[1]);
+        break;
+    case 5:
+        if (tail_opcode == 0)
+        {
+            SE(x, y);
+        }
+        break;
+    case 6:
+        LD_IMM(x, i.bytes[1]);
+        break;
+    case 7:
+        ADD_IMM(x, i.bytes[1]);
+        break;
+    case 8:
+        if (tail_opcode == 0)
+        {
+            LD(x, y);
+        }
+        else if (tail_opcode == 1)
+        {
+            OR(x, y);
+        }
+        else if (tail_opcode == 2)
+        {
+            AND(x, y);
+        }
+        else if (tail_opcode == 3)
+        {
+            XOR(x, y);
+        }
+        else if (tail_opcode == 4)
+        {
+            ADD(x, y);
+        }
+        else if (tail_opcode == 5)
+        {
+            SUB(x, y);
+        }
+        else if (tail_opcode == 6)
+        {
+            SHR(x);
+        }
+        else if (tail_opcode == 7)
+        {
+            SUBN(x, y);
+        }
+        else if (tail_opcode == 0xE)
+        {
+            SHL(x);
+        }
+        break;
+
+    case 9:
+        if (tail_opcode == 0)
+        {
+            SNE(x, y);
+        }
+        break;
+
+
+
+    default:
+        break;
+    }
+}

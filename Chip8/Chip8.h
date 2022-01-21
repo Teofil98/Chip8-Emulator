@@ -7,12 +7,27 @@
 #define SCREEN_W 8
 #define SCREEN_H 32
 
+#define NO_KEY_EVENT 0
+#define KEY_RELEASED_EVENT 1
+#define KEY_PRESSED_EVENT 2
+
+union instruction
+{
+    uint16_t instr;
+    uint8_t bytes[2];
+
+};
+
 class Chip8
 {
 public:
     //constructor
     Chip8();
 
+    uint8_t keyEvent = NO_KEY_EVENT;
+    uint8_t pressedKey;
+    void loadROM(const char* path);
+    void clock();
     bool runInstructionTests(bool verbose);
 
 private:
@@ -70,12 +85,10 @@ private:
     void JMP_REL(uint16_t addr); void RND(uint8_t reg_idx, uint8_t val);
     void DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes);
     void SKP(uint8_t reg_idx); void SKNP(uint8_t reg_idx);
-    void LD_DT(uint8_t reg_idx); void LD_KEY(uint8_t reg_idx); void SET_DT(uint8_t reg_idx);
+    void LD_DT(uint8_t reg_idx); bool LD_KEY(uint8_t reg_idx); void SET_DT(uint8_t reg_idx);
     void SET_ST(uint8_t reg_idx); void ADD_I(uint8_t reg_idx); void SET_DIGIT(uint8_t reg_idx);
     void SET_BCD(uint8_t reg_idx); void STORE_REGS(uint8_t reg_idx); void LOAD_REGS(uint8_t reg_idx);
 
-    uint8_t getPressedKey();
-    uint8_t requestKeyPress();
     void printScreen();
 
     //Tests
@@ -102,7 +115,16 @@ private:
     bool testJMP_REL(bool verbose); 
     bool testRND(bool verbose);
     bool testDRW(bool verbose);
-
+    bool testSKP(bool verbose); 
+    bool testSKNP(bool verbose);
+    bool testLD_DT(bool verbose); 
+    bool testLD_KEY(bool verbose); 
+    bool testSET_DT(bool verbose);
+    bool testSET_ST(bool verbose); 
+    bool testADD_I(bool verbose);
     bool testSET_DIGIT(bool verbose);
+    bool testSET_BCD(bool verbose); 
+    bool testSTORE_REGS(bool verbose);
+    bool testLOAD_REGS(bool verbose);
 };
 

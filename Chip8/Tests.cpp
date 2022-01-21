@@ -1069,6 +1069,284 @@ bool Chip8::testDRW(bool verbose)
     return passed;
 }
 
+bool Chip8::testSKP(bool verbose)
+{
+    //TODO: Implement
+    return false;
+}
+bool Chip8::testSKNP(bool verbose)
+{
+    //TODO: Implement
+    return false;
+}
+
+bool Chip8::testLD_DT(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldDT = DT;
+    uint8_t oldVx = V[2];
+
+    DT = 0x91;
+
+    LD_DT(2);
+
+    if (V[2] != 0x91)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > Load DT into Vx instruction doesn't set the correct value.\n");
+        }
+    }
+
+    //restore state
+    DT = oldDT;
+    V[2] = oldVx;
+
+    return passed;
+}
+
+bool Chip8::testLD_KEY(bool verbose)
+{
+    //TODO: implement
+
+    return false;
+}
+bool Chip8::testSET_DT(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldDT = DT;
+    uint8_t oldVx = V[2];
+
+    V[2] = 0x81;
+
+    SET_DT(2);
+
+    if (DT != 0x81)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > Set DT instruction doesn't set the correct value.\n");
+        }
+    }
+
+    //restore state
+    DT = oldDT;
+    V[2] = oldVx;
+
+    return passed;
+}
+
+bool Chip8::testSET_ST(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint8_t oldST = ST;
+    uint8_t oldVx = V[2];
+
+    V[2] = 0x81;
+
+    SET_ST(2);
+
+    if (ST != 0x81)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > Set ST instruction doesn't set the correct value.\n");
+        }
+    }
+
+    //restore state
+    ST = oldST;
+    V[2] = oldVx;
+
+    return passed;
+}
+
+bool Chip8::testADD_I(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldI = I;
+    uint8_t Vx = V[3];
+
+    I = 0x82;
+    V[3] = 0x11;
+
+    ADD_I(3);
+
+    if (I != 0x93)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > ADD value to I register instruction doesn't set the correct value.\n");
+        }
+    }
+
+    return passed;
+}
+
+bool Chip8::testSET_BCD(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldI = I;
+    uint8_t oldVx = V[4];
+    uint8_t oldMem[3];
+    
+    I = 0x231;
+    oldMem[0] = mem[0x231];
+    oldMem[1] = mem[0x232];
+    oldMem[2] = mem[0x233];
+
+    V[4] = 178;
+
+    SET_BCD(4);
+
+    if (mem[0x231] != 1)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > LD BCD representation doesn't set the hundreds digit correctly.\n");
+        }
+    }
+
+    if (mem[0x232] != 7)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > LD BCD representation doesn't set the tens digit correctly.\n");
+        }
+    }
+
+    if (mem[0x233] != 8)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > LD BCD representation doesn't set the ones digit correctly.\n");
+        }
+    }
+
+    //restore state
+    I = oldI;
+    V[4] = oldVx;
+    mem[0x231] = oldMem[0];
+    mem[0x232] = oldMem[1];
+    mem[0x233] = oldMem[2];
+
+    return passed;
+}
+
+bool Chip8::testSTORE_REGS(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldI = I;
+    uint8_t oldV[3];
+    uint8_t oldMem[3];
+
+    
+    I = 0x231;
+    oldV[0] = V[0];
+    oldV[1] = V[1];
+    oldV[2] = V[2];
+    oldMem[0] = mem[0x231];
+    oldMem[1] = mem[0x232];
+    oldMem[2] = mem[0x233];
+
+
+    V[0] = 0x81;
+    V[1] = 0x24;
+    V[2] = 0x78;
+
+    STORE_REGS(2);
+
+    if (mem[0x231] != 0x81 || mem[0x232] != 0x24 || mem[0x233] != 0x78)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > LD register sequence in memory instruction doesn't set the correct values.\n");
+        }
+    }
+
+    //restore state
+    I = oldI;
+
+    mem[0x231] = oldMem[0];
+    mem[0x232] = oldMem[1];
+    mem[0x233] = oldMem[2];
+
+    V[0] = oldV[0];
+    V[1] = oldV[1];
+    V[2] = oldV[2];
+
+    return passed;
+}
+
+bool Chip8::testLOAD_REGS(bool verbose)
+{
+    bool passed = true;
+
+    //save state
+    uint16_t oldI = I;
+    uint8_t oldV[3];
+    uint8_t oldMem[3];
+
+
+    I = 0x231;
+    oldV[0] = V[0];
+    oldV[1] = V[1];
+    oldV[2] = V[2];
+    oldMem[0] = mem[0x231];
+    oldMem[1] = mem[0x232];
+    oldMem[2] = mem[0x233];
+
+
+    mem[0x231] = 0x81;
+    mem[0x232] = 0x24;
+    mem[0x233] = 0x78;
+
+    LOAD_REGS(2);
+
+    if (V[0] != 0x81 || V[1] != 0x24 || V[2] != 0x78)
+    {
+        passed = false;
+        if (verbose)
+        {
+            printf(" > LD memory block in registers instruction doesn't set the correct values.\n");
+        }
+    }
+
+    //restore state
+    I = oldI;
+
+    mem[0x231] = oldMem[0];
+    mem[0x232] = oldMem[1];
+    mem[0x233] = oldMem[2];
+
+    V[0] = oldV[0];
+    V[1] = oldV[1];
+    V[2] = oldV[2];
+
+    return passed;
+}
+
+
 bool Chip8::runInstructionTests(bool verbose = false)
 {
     const uint8_t totalTests = 35;
@@ -1290,7 +1568,96 @@ bool Chip8::runInstructionTests(bool verbose = false)
         printf("[FAIL]  LD {Fx33} - load digit sprite address into I instruction test.\n");
     }
 
+    if (testSKP(verbose))
+    {
+        printf("[PASS] SKP {Ex9E} - skip if key pressed instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SKP {Ex9E} - skip if key pressed instruction test.\n");
+    }
+
+    if (testSKNP(verbose))
+    {
+        printf("[PASS] SKNP {ExA1} - skip if key not pressed instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] SKNP {ExA1} - skip if key not pressed instruction test.\n");
+    }
    
+    if (testLD_DT(verbose))
+    {
+        printf("[PASS] LD {Fx07} - load DT into Vx instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL]  LD {Fx07} - load DT into Vx instruction test.\n");
+    }
+
+    if (testLD_KEY(verbose))
+    {
+        printf("[PASS] LD {Fx0A} - load pressed key into Vx instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Fx0A} - load pressed key into Vx instruction test.\n");
+    }
+
+    if (testSET_DT(verbose))
+    {
+        printf("[PASS] LD {Fx15} - set DT instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Fx15} - set DT instruction test.\n");
+    }
+
+    if (testSET_ST(verbose))
+    {
+        printf("[PASS] LD {Fx18} - set ST instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Fx18} - set ST instruction test.\n");
+    }
+
+    if (testADD_I(verbose))
+    {
+        printf("[PASS] ADD {Fx1E} - add value to I register instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] ADD {Fx1E} - add value to I register instruction test.\n");
+    }
+
+    if (testSET_BCD(verbose))
+    {
+        printf("[PASS] LD {Fx33} - load BCD representation into memory instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Fx33} - load BCD representation into memory instruction test.\n");
+    }
+
+    if (testSTORE_REGS(verbose))
+    {
+        printf("[PASS] LD {Fx55} - store register sequence into memory instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Fx55} - store register sequence into memory instruction test.\n");
+    }
+
+    if (testLOAD_REGS(verbose))
+    {
+        printf("[PASS] LD {Fx65} - load memory block into registers instruction test.\n");
+        testsPassed++;
+    }
+    else {
+        printf("[FAIL] LD {Fx65} - load memory block into registers instruction test.\n");
+    }
+
     printf("Tests passed: %d/%d\n", testsPassed, totalTests);
 
     return (testsPassed == totalTests);
