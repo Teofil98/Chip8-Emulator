@@ -10,6 +10,8 @@
 #define NO_KEY_EVENT 0
 #define KEY_RELEASED_EVENT 1
 #define KEY_PRESSED_EVENT 2
+//#define CHIP8_PROGRAM_START 0x600
+#define CHIP8_PROGRAM_START 0x200
 
 union instruction
 {
@@ -26,9 +28,16 @@ public:
 
     uint8_t keyEvent = NO_KEY_EVENT;
     uint8_t pressedKey;
+    
+    //64 = 8 * 8
+    uint8_t screen[32][8];
+
     void loadROM(const char* path);
     void clock();
+    void decrementTimers();
+
     bool runInstructionTests(bool verbose);
+    void printScreen();
 
 private:
     //4kb of memory
@@ -55,18 +64,16 @@ private:
 
     //registers
     uint8_t V[16] = { 0 };
-    uint8_t DT, ST;
-    uint8_t SP;
-    uint16_t I;
+    uint8_t DT = 0; 
+    uint8_t ST = 0;;
+    uint8_t SP = 0;
+    uint16_t I = 0;
     uint16_t PC;
 
     //stack
     uint16_t stack[16];
 
-    //screen
-    //32 = 4 * 8
-    //64 = 8 * 8
-    uint8_t screen[32][8];
+   
 
     //instructions
     //not used
@@ -88,8 +95,6 @@ private:
     void LD_DT(uint8_t reg_idx); bool LD_KEY(uint8_t reg_idx); void SET_DT(uint8_t reg_idx);
     void SET_ST(uint8_t reg_idx); void ADD_I(uint8_t reg_idx); void SET_DIGIT(uint8_t reg_idx);
     void SET_BCD(uint8_t reg_idx); void STORE_REGS(uint8_t reg_idx); void LOAD_REGS(uint8_t reg_idx);
-
-    void printScreen();
 
     //Tests
     bool testCLS(bool verbose);

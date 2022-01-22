@@ -3,9 +3,8 @@
 
 Chip8::Chip8()
 {
-    DT = 0;
-    ST = 0;
-    SP = 0;
+    //start of Chip-8 programs
+    PC = CHIP8_PROGRAM_START;
 
     srand(time(NULL));
 }
@@ -38,6 +37,7 @@ void Chip8::JMP(uint16_t addr)
 //WARNING: Changed spec, if something doesn't work, check here 
 void Chip8::CALL(uint16_t addr)
 {
+    printf("Stack pointer %d\n", SP);
     if (SP < 16)
     {
         stack[SP++] = PC;
@@ -357,7 +357,7 @@ char* byteToString(uint8_t byte)
 
     for (int i = 0; i < 8; i++)
     {
-        str_rep[i] = ((byte & 0x80) >> 7) == 1 ? '*' : '-';
+        str_rep[i] = ((byte & 0x80) >> 7) == 1 ? '*' : ' ';
         byte <<= 1;
     }
     str_rep[8] = 0;
@@ -380,9 +380,22 @@ void Chip8::printScreen()
     }
 }
 
+void Chip8::decrementTimers()
+{
+    if (ST > 0)
+    {
+        ST--;
+    }
+
+    if (DT > 0)
+    {
+        DT--;
+    }
+}
+
 void Chip8::loadROM(const char* path)
 {
-    std::ifstream rom (path);
+    std::ifstream rom (path, std::ios::in | std::ios::binary);
    
     if (!rom)
     {
@@ -395,25 +408,35 @@ void Chip8::loadROM(const char* path)
     size_t length = rom.tellg();
     rom.seekg(0, std::ios::beg);
 
+    printf("Read rom of length %u\n", length);
     //read rom in memory
-    rom.read((char*)(mem + 0x200), length);
+    rom.read((char*)(mem + CHIP8_PROGRAM_START), length);
+    printf("Read %d bytes!\n",rom.gcount());
+
+    //print memory
+    for (int i = CHIP8_PROGRAM_START - 0x2; i < CHIP8_PROGRAM_START + 0x10; i++)
+    {
+        printf("[0x%X] 0x%X, ",i,  mem[i]);
+    }
+    printf("\n");
 }
 
 void Chip8::clock()
 {
     instruction i;
     bool incrementPC = true;
-
     //fetch instruction
-    i.bytes[0] = mem[PC];
-    i.bytes[1] = mem[PC + 1];
-
+    //my CPU is little endian
+    i.bytes[1] = mem[PC];
+    i.bytes[0] = mem[PC + 1];
     //decode instruction
     uint8_t opcode = (i.instr & 0xF000) >> 12;
     uint8_t tail_opcode = (i.instr & 0x000F);
     uint8_t x = (i.instr & 0x0F00) >> 8;
     uint8_t y = (i.instr & 0x00F0) >> 4;
-    uint8_t nnn = (i.instr & 0x0FFF);
+    uint16_t nnn = (i.instr & 0x0FFF);
+
+    printf("instruction: 0x%X, byte[0] = 0x%X, byte[1] = 0x%X, PC = 0x%X\n", i.instr, i.bytes[0],i.bytes[1],PC);
 
     //execute instruction
     switch (opcode)
@@ -433,15 +456,17 @@ void Chip8::clock()
         break;
     case 1:
         JMP(nnn);
+        incrementPC = false;
         break;
     case 2:
         CALL(nnn);
+        incrementPC = false;
         break;
     case 3:
-        SE_IMM(x, i.bytes[1]);
+        SE_IMM(x, i.bytes[0]);
         break;
     case 4:
-        SNE_IMM(x, i.bytes[1]);
+        SNE_IMM(x, i.bytes[0]);
         break;
     case 5:
         if (tail_opcode == 0)
@@ -450,10 +475,10 @@ void Chip8::clock()
         }
         break;
     case 6:
-        LD_IMM(x, i.bytes[1]);
+        LD_IMM(x, i.bytes[0]);
         break;
     case 7:
-        ADD_IMM(x, i.bytes[1]);
+        ADD_IMM(x, i.bytes[0]);
         break;
     case 8:
         if (tail_opcode == 0)
@@ -500,10 +525,67 @@ void Chip8::clock()
             SNE(x, y);
         }
         break;
-
+    case 0xA:
+        LD_I(nnn);
+        break;
+    case 0xB:
+        JMP_REL(nnn);
+        incrementPC = false;
+        break;
+    case 0xC:
+        RND(x, i.bytes[0]);
+        break;
+    case 0xD:
+        DRW(x, y, tail_opcode);
+        break;
+    case 0xE:
+        if (i.bytes[0] == 0x9E)
+        {
+            SKP(x);
+        }
+        else if (i.bytes[0] == 0xA1)
+        {
+            SKNP(x);
+        }
+        break;
+    case 0xF:
+        if (i.bytes[0] == 0x07)
+        {
+            LD_DT(x);
+        } else if (i.bytes[0] == 0x0A)
+        {
+            incrementPC = LD_KEY(x);
+        } else if (i.bytes[0] == 0x15)
+        {
+            SET_DT(x);
+        } else if (i.bytes[0] == 0x18)
+        {
+            SET_ST(x);
+        } else if (i.bytes[0] == 0x1E)
+        {
+            ADD_I(x);
+        } else if (i.bytes[0] == 0x29)
+        {
+            SET_DIGIT(x);
+        } else if (i.bytes[0] == 0x33)
+        {
+            SET_BCD(x);
+        } else if (i.bytes[0] == 0x55)
+        {
+            STORE_REGS(x);
+        } else if (i.bytes[0] == 0x65)
+        {
+            LOAD_REGS(x);
+        }
+        break;
 
 
     default:
         break;
+    }
+
+    if (incrementPC)
+    {
+        PC += 2;
     }
 }
