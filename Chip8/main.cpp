@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Chip8.h"
+#include "Disassembler.h"
+
 #define OLC_PGE_APPLICATION
 #include <olcPixelGameEngine.h>
 
 #define TIMER_CLOCK_FREQ 60
-#define CHIP8_CLOCK_FREQ 500
+#define CHIP8_CLOCK_FREQ 700
 
 
 class Chip8Emulator : public olc::PixelGameEngine
@@ -17,16 +19,24 @@ public:
     }
 
     Chip8 chip8  = Chip8();
+    Disassembler disassembler = Disassembler(chip8);
 
 
     bool OnUserCreate() override
     {
        // chip8.loadROM("roms/test_opcode.ch8");
        // chip8.loadROM("roms/Paddles.ch8");
-        //chip8.loadROM("roms/Tetris.ch8");
+       // chip8.loadROM("roms/IBM Logo.ch8");
+       // chip8.loadROM("roms/Clock_Program.ch8");
        // chip8.loadROM("roms/Breakout.ch8");
-        chip8.loadROM("roms/Pong.ch8");
+       // chip8.loadROM("roms/Astro_Dodge_Hires.ch8");
+        //chip8.loadROM("roms/SQRT_Test.ch8");
+       // chip8.loadROM("roms/Pong.ch8");
         //chip8.loadROM("roms/Random_Number_Test.ch8");
+        chip8.loadROM("roms/Tetris.ch8");
+
+        //disassembler.disassembleFile("roms/Tetris.ch8", "disassembled_Tetris.txt");
+
         return true;
     }
 
@@ -47,19 +57,15 @@ public:
         {
             frameTotalTime = 0;
 
+            
             //update CPU state
             chip8.clock();
 
             //draw a frame
             Clear(olc::BLACK);
             drawFrame();
-            //system("cls");
-            //chip8.printScreen();
-            
 
-
-
-            //reset button states (will be set again next emulator frame if needed)
+            //reset button states (will be set again next frame if needed)
             chip8.keyEvent = NO_KEY_EVENT;
         }
 
@@ -92,12 +98,14 @@ private:
             {
                 chip8.keyEvent = KEY_PRESSED_EVENT;
                 chip8.pressedKey = keyMap[i].hexGrid;
+                printf("holding key %x\n", keyMap[i].hexGrid);
                 break;
             }
             else if (GetKey(keyMap[i].kbrd).bReleased)
             {
                 chip8.keyEvent = KEY_RELEASED_EVENT;
                 chip8.pressedKey = keyMap[i].hexGrid;
+                printf("releasing key %x\n", keyMap[i].hexGrid);
                 break;
             }
         }
@@ -114,14 +122,11 @@ private:
                 //draw on screen based on bytes
                 for (int k = 0; k < 8; k++)
                 {
-                    
                     if (((byte_to_draw & 0x80) >> 7) == 1)
                     {
                         Draw(j * 8 + k, i);  
                     }
-                   /* else {
-                        Draw(j * 8 + k, i, olc::BLACK);
-                    }*/
+                   
                     byte_to_draw <<= 1;
                 }
             }

@@ -196,13 +196,13 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
     uint8_t curr_col = V[reg1_idx];
     uint8_t curr_row = V[reg2_idx];
 
+    bool collison = false;
     bool wrap_around = false;
     if (V[reg1_idx] + 8 > 63)
     {
         wrap_around = true;
     }
 
-    V[0x0F] = 0;
     for (uint8_t i = 0; i < nbytes; i++)
     {
         //read byte at address specified in I
@@ -239,11 +239,7 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
         //determine if bits are going to be flipped when we XOR and set flag
         if ((draw_byte_high & overlap_byte_high) || (draw_byte_low & overlap_byte_low))
         {
-            V[0x0F] = 1;
-        }
-        else
-        {
-            V[0x0F] = 0;
+            collison = true;
         }
 
         //XOR the values
@@ -255,6 +251,90 @@ void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
         }
 
         curr_row++;
+    }
+
+    if (collison)
+    {
+        V[0xF] = 1;
+    }
+    else
+    {
+        V[0x0F] = 0;
+    }
+
+}
+
+//draw without wraparound 
+void Chip8::DRW_ALT(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
+{
+    //Vx column, Vy row
+    uint8_t curr_col = V[reg1_idx] % 64;
+    uint8_t curr_row = V[reg2_idx] % 32;
+
+    bool collison = false;
+    bool wrap_around = false;
+    if (V[reg1_idx] + 8 > 63)
+    {
+        wrap_around = true;
+    }
+
+    for (uint8_t i = 0; i < nbytes; i++)
+    {
+        //read byte at address specified in I
+        uint8_t byte = mem[I + i];
+
+        if (curr_row > 31)
+        {
+            break;
+        }
+
+        //get current byte at this position on screen
+
+        uint8_t draw_byte_high;
+        uint8_t draw_byte_low;
+
+        uint8_t offset = curr_col % 8;
+        draw_byte_high = byte >> offset;
+        draw_byte_low = byte << (8 - offset);
+
+        //if we have to wrap around, byte to the right of written value is on column 0
+        uint8_t screen_low_byte_col;
+
+        
+        screen_low_byte_col = curr_col / 8 + (offset > 0 ? 1 : 0);
+        
+
+        uint8_t overlap_byte_high = screen[curr_row][curr_col / 8];
+        uint8_t overlap_byte_low = 0;
+        if (!wrap_around)
+        {
+            overlap_byte_low = screen[curr_row][screen_low_byte_col];
+        }
+
+        //determine if bits are going to be flipped when we XOR and set flag
+        if ((draw_byte_high & overlap_byte_high) || (draw_byte_low & overlap_byte_low))
+        {
+            collison = true;
+        }
+
+        //XOR the values
+        screen[curr_row][curr_col / 8] = overlap_byte_high ^ draw_byte_high;
+
+        if (offset != 0 && !wrap_around)
+        {
+            screen[curr_row][screen_low_byte_col] = overlap_byte_low ^ draw_byte_low;
+        }
+
+        curr_row++;
+    }
+
+    if (collison)
+    {
+        V[0xF] = 1;
+    }
+    else
+    {
+        V[0x0F] = 0;
     }
 
 }
@@ -419,6 +499,8 @@ void Chip8::loadROM(const char* path)
         printf("[0x%X] 0x%X, ",i,  mem[i]);
     }
     printf("\n");
+
+    rom.close();
 }
 
 void Chip8::clock()
@@ -536,7 +618,7 @@ void Chip8::clock()
         RND(x, i.bytes[0]);
         break;
     case 0xD:
-        DRW(x, y, tail_opcode);
+        DRW_ALT(x, y, tail_opcode);
         break;
     case 0xE:
         if (i.bytes[0] == 0x9E)

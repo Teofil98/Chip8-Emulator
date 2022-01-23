@@ -13,18 +13,19 @@
 //#define CHIP8_PROGRAM_START 0x600
 #define CHIP8_PROGRAM_START 0x200
 
-union instruction
-{
-    uint16_t instr;
-    uint8_t bytes[2];
-
-};
 
 class Chip8
 {
 public:
     //constructor
     Chip8();
+
+    union instruction
+    {
+        uint16_t instr;
+        uint8_t bytes[2];
+
+    };
 
     uint8_t keyEvent = NO_KEY_EVENT;
     uint8_t pressedKey;
@@ -39,9 +40,22 @@ public:
     bool runInstructionTests(bool verbose);
     void printScreen();
 
-private:
+
     //4kb of memory
     //Set the first 5 * 16 bytes in the interpreter memory (0x000 -> 0x1FF) to be the digit sprites
+    
+
+    //registers
+    uint8_t V[16] = { 0 };
+    uint8_t DT = 0; 
+    uint8_t ST = 0;;
+    uint8_t SP = 0;
+    uint16_t I = 0;
+    uint16_t PC;
+
+    //stack
+    uint16_t stack[16];
+
     uint8_t mem[4 * 1024] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -62,19 +76,9 @@ private:
 
     };
 
-    //registers
-    uint8_t V[16] = { 0 };
-    uint8_t DT = 0; 
-    uint8_t ST = 0;;
-    uint8_t SP = 0;
-    uint16_t I = 0;
-    uint16_t PC;
-
-    //stack
-    uint16_t stack[16];
 
    
-
+private:
     //instructions
     //not used
     void SYS(uint16_t addr);
@@ -91,6 +95,7 @@ private:
     void SNE(uint8_t reg1_idx, uint8_t reg2_idx); void LD_I(uint16_t addr);
     void JMP_REL(uint16_t addr); void RND(uint8_t reg_idx, uint8_t val);
     void DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes);
+    void DRW_ALT(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes);
     void SKP(uint8_t reg_idx); void SKNP(uint8_t reg_idx);
     void LD_DT(uint8_t reg_idx); bool LD_KEY(uint8_t reg_idx); void SET_DT(uint8_t reg_idx);
     void SET_ST(uint8_t reg_idx); void ADD_I(uint8_t reg_idx); void SET_DIGIT(uint8_t reg_idx);
@@ -131,5 +136,7 @@ private:
     bool testSET_BCD(bool verbose); 
     bool testSTORE_REGS(bool verbose);
     bool testLOAD_REGS(bool verbose);
+
+    
 };
 
