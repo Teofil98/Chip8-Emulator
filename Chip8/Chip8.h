@@ -29,6 +29,7 @@ public:
 
     uint8_t keyEvent = NO_KEY_EVENT;
     uint8_t pressedKey;
+    bool updatedScreen = false;
     
     //64 = 8 * 8
     uint8_t screen[32][8];

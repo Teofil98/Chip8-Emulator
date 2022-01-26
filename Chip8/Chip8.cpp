@@ -37,7 +37,6 @@ void Chip8::JMP(uint16_t addr)
 //WARNING: Changed spec, if something doesn't work, check here 
 void Chip8::CALL(uint16_t addr)
 {
-    printf("Stack pointer %d\n", SP);
     if (SP < 16)
     {
         stack[SP++] = PC;
@@ -349,7 +348,7 @@ void Chip8::SKP(uint8_t reg_idx)
 
 void Chip8::SKNP(uint8_t reg_idx)
 {
-    if (keyEvent == KEY_PRESSED_EVENT && V[reg_idx] != pressedKey)
+    if (keyEvent != NO_KEY_EVENT && V[reg_idx] != pressedKey || keyEvent == NO_KEY_EVENT)
     {
         PC += 2;
     }
@@ -494,11 +493,11 @@ void Chip8::loadROM(const char* path)
     printf("Read %d bytes!\n",rom.gcount());
 
     //print memory
-    for (int i = CHIP8_PROGRAM_START - 0x2; i < CHIP8_PROGRAM_START + 0x10; i++)
+    /*for (int i = CHIP8_PROGRAM_START - 0x2; i < CHIP8_PROGRAM_START + 0x10; i++)
     {
         printf("[0x%X] 0x%X, ",i,  mem[i]);
     }
-    printf("\n");
+    printf("\n");*/
 
     rom.close();
 }
@@ -518,7 +517,9 @@ void Chip8::clock()
     uint8_t y = (i.instr & 0x00F0) >> 4;
     uint16_t nnn = (i.instr & 0x0FFF);
 
-    printf("instruction: 0x%X, byte[0] = 0x%X, byte[1] = 0x%X, PC = 0x%X\n", i.instr, i.bytes[0],i.bytes[1],PC);
+   // printf("instruction: 0x%X, byte[0] = 0x%X, byte[1] = 0x%X, PC = 0x%X\n", i.instr, i.bytes[0],i.bytes[1],PC);
+
+    updatedScreen = false;
 
     //execute instruction
     switch (opcode)
@@ -527,6 +528,7 @@ void Chip8::clock()
         if (i.instr == 0x00E0)
         {
             CLS();
+            updatedScreen = true;
         }
         else if (i.instr == 0x00EE)
         {
@@ -619,6 +621,7 @@ void Chip8::clock()
         break;
     case 0xD:
         DRW_ALT(x, y, tail_opcode);
+        updatedScreen = true;
         break;
     case 0xE:
         if (i.bytes[0] == 0x9E)
