@@ -1,10 +1,11 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include "Disassembler.h"
 
 
 
-char* Disassembler::disassembleInstruction(uint16_t instruction)
+std::string Disassembler::disassembleInstruction(uint16_t instruction)
 {
     //decode instruction
     uint8_t opcode = (instruction & 0xF000) >> 12;
@@ -178,7 +179,10 @@ char* Disassembler::disassembleInstruction(uint16_t instruction)
         break;
     }
 
-    return str_instruction;
+    std::string str(str_instruction);
+    free(str_instruction);
+
+    return str;
 }
 
 void Disassembler::disassembleFile(const char* filename, const char* disassembled_filename)
@@ -213,10 +217,9 @@ void Disassembler::disassembleFile(const char* filename, const char* disassemble
 
         //disassemble instruction and write to file
 
-        char* disassembled_instr = disassembleInstruction(instr.instr);
-        dissassembled_file.write(disassembled_instr, strlen(disassembled_instr));
+        std::string disassembled_instr = disassembleInstruction(instr.instr);
+        dissassembled_file.write(disassembled_instr.c_str(), disassembled_instr.length());
         dissassembled_file << "\n";
-        free(disassembled_instr);
     }
     
     file.close();

@@ -11,7 +11,7 @@ public:
         chip8 = c8;
     }
 
-    char* disassembleInstruction(uint16_t instruction);
+    std::string disassembleInstruction(uint16_t instruction);
     void disassembleFile(const char* filename, const char* disassembled_filename);
 
 private:

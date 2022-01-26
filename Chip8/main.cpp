@@ -9,18 +9,37 @@
 #define TIMER_CLOCK_FREQ 60
 #define CHIP8_CLOCK_FREQ 700
 
+#define DEBUGGER_MODE false
 
 class Chip8Emulator : public olc::PixelGameEngine
 {
 public:
-    Chip8Emulator()
+    Chip8Emulator(int screen_width, int screen_height, int pixel_width, int pixel_height, int debugger_width, int debugger_height)
     {
+        screen_w = screen_width;
+        screen_h = screen_height;
+        pixel_w = pixel_width;
+        pixel_h = pixel_height;
+        debugger_w = debugger_width;
+        debugger_h = debugger_height;
+
+
         sAppName = "Chip-8 Emulator";
     }
 
     Chip8 chip8  = Chip8();
     Disassembler disassembler = Disassembler(chip8);
 
+    int screen_w;
+    int screen_h;
+    int pixel_w;
+    int pixel_h;
+
+    int debugger_w;
+    int debugger_h;
+
+    float secondpassed = 0;
+    int instr_exec = 0;
 
     bool OnUserCreate() override
     {
@@ -31,11 +50,11 @@ public:
        // chip8.loadROM("roms/Breakout.ch8");
        // chip8.loadROM("roms/Astro_Dodge_Hires.ch8");
         //chip8.loadROM("roms/SQRT_Test.ch8");
-       // chip8.loadROM("roms/Pong.ch8");
-        //chip8.loadROM("roms/Random_Number_Test.ch8");
-        chip8.loadROM("roms/Tetris.ch8");
+      // chip8.loadROM("roms/Pong.ch8");
+       // chip8.loadROM("roms/Random_Number_Test.ch8");
+        chip8.loadROM("roms/TETRIS");
 
-        //disassembler.disassembleFile("roms/Tetris.ch8", "disassembled_Tetris.txt");
+        //disassembler.disassembleFile("roms/Tetris.rom", "disassembled_Tetris.txt");
 
         return true;
     }
@@ -47,7 +66,13 @@ public:
         //set the state of the keyboard asynch with the clock of the chip
         setKeyboardState();
 
-        if (timerTotalTime >= timerTotalTime / TIMER_CLOCK_FREQ)
+        //check if step to next instruction requested (only in debugger mode)
+        if (DEBUGGER_MODE && (GetKey(olc::SPACE).bReleased || GetKey(olc::V).bHeld))
+        {
+            stepNextInstruction = true;
+        }
+
+        if (timerTotalTime >= (float) timerTotalTime / TIMER_CLOCK_FREQ)
         {
             timerTotalTime = 0;
             chip8.decrementTimers();
@@ -55,18 +80,52 @@ public:
 
         if (frameTotalTime >= 1.0 / CHIP8_CLOCK_FREQ)
         {
-            frameTotalTime = 0;
+
+            secondpassed += frameTotalTime;
 
             
-            //update CPU state
-            chip8.clock();
 
-            //draw a frame
-            Clear(olc::BLACK);
-            drawFrame();
+            frameTotalTime = 0;
+
+             
+            if (!DEBUGGER_MODE || stepNextInstruction)
+            {
+                //update CPU state
+                chip8.clock();
+
+                //log how many instructions executed per second
+                instr_exec++;
+                if (secondpassed > 1.0)
+                {
+                    printf("1 seconds has passed: executed %d instructions\n",instr_exec);
+                    secondpassed = 0;
+                    instr_exec = 0;
+                }
+
+                if (chip8.updatedScreen)
+                {
+                    //draw a frame
+                    Clear(olc::BLACK);
+                    drawFrame();
+                }
+
+            }
+            
+            if (DEBUGGER_MODE && stepNextInstruction)
+            {
+               // drawDebugger();
+                system("cls");
+                printCPUState();
+            }
 
             //reset button states (will be set again next frame if needed)
-            chip8.keyEvent = NO_KEY_EVENT;
+            if (!DEBUGGER_MODE || stepNextInstruction)
+            {
+                chip8.keyEvent = NO_KEY_EVENT;
+                chip8.pressedKey = 0x10; //i.e. not a valid key
+                stepNextInstruction = false;
+            }
+           
         }
 
         return true;
@@ -75,6 +134,8 @@ public:
 private:
     float frameTotalTime = 0;
     float timerTotalTime = 0;
+    bool stepNextInstruction = false;
+    
 
     struct KeyMap
     {
@@ -98,18 +159,44 @@ private:
             {
                 chip8.keyEvent = KEY_PRESSED_EVENT;
                 chip8.pressedKey = keyMap[i].hexGrid;
-                printf("holding key %x\n", keyMap[i].hexGrid);
                 break;
             }
             else if (GetKey(keyMap[i].kbrd).bReleased)
             {
                 chip8.keyEvent = KEY_RELEASED_EVENT;
-                chip8.pressedKey = keyMap[i].hexGrid;
-                printf("releasing key %x\n", keyMap[i].hexGrid);
                 break;
             }
         }
     }
+
+    void drawRegisters()
+    {
+        DrawString(screen_w + 4, 4, std::string("V1: 0x1234"));
+    }
+
+    void drawDebugger()
+    {
+        //draw frame around region debugger
+        //left line
+        DrawLine(screen_w + 2, 2, screen_w + 2, screen_h + debugger_h - 2, olc::YELLOW);
+
+        //right line
+        DrawLine(screen_w + debugger_w - 2, 2, screen_w + debugger_w - 2, 
+            screen_h + debugger_h - 2, olc::YELLOW);
+
+        //top line
+        DrawLine(screen_w + 2, 2, screen_w + debugger_w -2, 2, olc::YELLOW);
+
+        //bottom line
+        DrawLine(screen_w + 2, screen_h + debugger_h - 2, screen_w + debugger_w - 2,
+            screen_h + debugger_h - 2, olc::YELLOW);
+
+         drawRegisters();
+        //drawInstuctions();
+
+        
+    }
+
 
     void drawFrame()
     {
@@ -133,13 +220,57 @@ private:
         }
     }
 
+    void printCPUState()
+    {
+        //print registers
+        for (uint8_t i = 0; i <= 0xF; i++)
+        {
+            printf("V%X: 0x%X  ", i, chip8.V[i]);
+            if ((i + 1) % 4 == 0)
+                printf("\n");
+        }
+        printf("I: 0x%X ", chip8.I);
+        printf("SP: 0x%X ", chip8.SP);
+        printf("ST: 0x%X ", chip8.ST);
+        printf("DT: 0x%X ", chip8.DT);
+        printf("PC: 0x%X ", chip8.PC);
+        printf("\n\n");
+
+        //print instructions
+        for (uint16_t i = chip8.PC - 2 * 5; i <= chip8.PC + 2 * 5; i += 2)
+        {
+            if (i == chip8.PC)
+                std::cout << "--> ";
+            Chip8::instruction instr;
+            instr.bytes[1] = chip8.mem[i];
+            instr.bytes[0] = chip8.mem[i  + 1];
+            
+            std::cout << disassembler.disassembleInstruction(instr.instr) << std::endl;
+        }
+
+    }
+
+
 };
 
 int main()
 {
-    Chip8Emulator emulator;
-    if(emulator.Construct(64,32,16,16))
+    Chip8Emulator emulator(64, 32, 16, 16, 24, 16);
+
+    int extra_w = 0;
+    int extra_h = 0;
+    if (DEBUGGER_MODE)
+    {
+        extra_w = emulator.debugger_w;
+        extra_h = emulator.debugger_h;
+    }
+
+    if (emulator.Construct(emulator.screen_w + extra_w, emulator.screen_h + extra_h,
+        emulator.pixel_w, emulator.pixel_h))
+    {
         emulator.Start();
+    }
+            
 
     return 0;
 }
