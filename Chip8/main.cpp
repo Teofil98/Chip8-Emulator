@@ -4,10 +4,10 @@
 #include "Disassembler.h"
 
 #define OLC_PGE_APPLICATION
-#include <olcPixelGameEngine.h>
+#include "olcPixelGameEngine.h"
 
 #define TIMER_CLOCK_FREQ 60
-#define CHIP8_CLOCK_FREQ 700
+#define CHIP8_CLOCK_FREQ 150
 
 #define DEBUGGER_MODE false
 
@@ -52,9 +52,9 @@ public:
         //chip8.loadROM("roms/SQRT_Test.ch8");
       // chip8.loadROM("roms/Pong.ch8");
        // chip8.loadROM("roms/Random_Number_Test.ch8");
-        chip8.loadROM("roms/TETRIS");
+        chip8.loadROM("roms/tetris_mod.ch8");
 
-        //disassembler.disassembleFile("roms/Tetris.rom", "disassembled_Tetris.txt");
+        disassembler.disassembleFile("roms/tetris_mod.ch8", "disassembled_Tetris_mod.txt");
 
         return true;
     }
@@ -94,13 +94,13 @@ public:
                 chip8.clock();
 
                 //log how many instructions executed per second
-                instr_exec++;
+                /*instr_exec++;
                 if (secondpassed > 1.0)
                 {
                     printf("1 seconds has passed: executed %d instructions\n",instr_exec);
                     secondpassed = 0;
                     instr_exec = 0;
-                }
+                }*/
 
                 if (chip8.updatedScreen)
                 {
@@ -118,11 +118,13 @@ public:
                 printCPUState();
             }
 
-            //reset button states (will be set again next frame if needed)
+            
             if (!DEBUGGER_MODE || stepNextInstruction)
             {
+                //reset button states (will be set again next frame if needed)
                 chip8.keyEvent = NO_KEY_EVENT;
                 chip8.pressedKey = 0x10; //i.e. not a valid key
+
                 stepNextInstruction = false;
             }
            
@@ -255,6 +257,7 @@ private:
 
 int main()
 {
+    
     Chip8Emulator emulator(64, 32, 16, 16, 24, 16);
 
     int extra_w = 0;

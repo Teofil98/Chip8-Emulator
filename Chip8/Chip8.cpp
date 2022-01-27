@@ -1,12 +1,16 @@
 #include "Chip8.h"
 #include <fstream>
+#include <random>
 
 Chip8::Chip8()
 {
     //start of Chip-8 programs
     PC = CHIP8_PROGRAM_START;
 
-    srand(time(NULL));
+    //set up random number generation
+    distribution = std::uniform_int_distribution<int>(0, 255);
+    generator.seed(time(NULL));
+   
 }
 
 void Chip8::SYS(uint16_t addr)
@@ -186,7 +190,9 @@ void Chip8::JMP_REL(uint16_t addr)
 
 void Chip8::RND(uint8_t reg_idx, uint8_t val)
 {
-    V[reg_idx] = (rand() % 256) & val;
+    uint8_t rnd = distribution(generator);  // generates number in the range 0...255
+   // printf("Generated random number: 0x%X\n", rnd);
+    V[reg_idx] = (uint8_t) (rnd & val);
 }
 
 void Chip8::DRW(uint8_t reg1_idx, uint8_t reg2_idx, uint8_t nbytes)
@@ -487,10 +493,10 @@ void Chip8::loadROM(const char* path)
     size_t length = rom.tellg();
     rom.seekg(0, std::ios::beg);
 
-    printf("Read rom of length %u\n", length);
+    //printf("Read rom of length %u\n", length);
     //read rom in memory
     rom.read((char*)(mem + CHIP8_PROGRAM_START), length);
-    printf("Read %d bytes!\n",rom.gcount());
+    //printf("Read %d bytes!\n",rom.gcount());
 
     //print memory
     /*for (int i = CHIP8_PROGRAM_START - 0x2; i < CHIP8_PROGRAM_START + 0x10; i++)

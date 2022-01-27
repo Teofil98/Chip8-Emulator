@@ -3,6 +3,7 @@
 #include<stdlib.h>
 #include<time.h>
 #include<iostream>
+#include<random>
 
 #define SCREEN_W 8
 #define SCREEN_H 32
@@ -80,6 +81,10 @@ public:
 
    
 private:
+
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution;
+
     //instructions
     //not used
     void SYS(uint16_t addr);
