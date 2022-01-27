@@ -467,6 +467,7 @@ void Chip8::printScreen()
 
 void Chip8::decrementTimers()
 {
+ 
     if (ST > 0)
     {
         ST--;

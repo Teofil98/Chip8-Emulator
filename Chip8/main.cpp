@@ -7,7 +7,7 @@
 #include "olcPixelGameEngine.h"
 
 #define TIMER_CLOCK_FREQ 60
-#define CHIP8_CLOCK_FREQ 150
+#define CHIP8_CLOCK_FREQ 700
 
 #define DEBUGGER_MODE false
 
@@ -52,7 +52,8 @@ public:
         //chip8.loadROM("roms/SQRT_Test.ch8");
       // chip8.loadROM("roms/Pong.ch8");
        // chip8.loadROM("roms/Random_Number_Test.ch8");
-        chip8.loadROM("roms/tetris_mod.ch8");
+       // chip8.loadROM("roms/tetris_mod.ch8");
+        chip8.loadROM("roms/tetris.ch8");
 
         disassembler.disassembleFile("roms/tetris_mod.ch8", "disassembled_Tetris_mod.txt");
 
@@ -72,8 +73,9 @@ public:
             stepNextInstruction = true;
         }
 
-        if (timerTotalTime >= (float) timerTotalTime / TIMER_CLOCK_FREQ)
+        if (timerTotalTime >=  1.0 /  TIMER_CLOCK_FREQ)
         {
+            //TODO: Double check timers, may have bug 
             timerTotalTime = 0;
             chip8.decrementTimers();
         }
