@@ -46,16 +46,17 @@ public:
        // chip8.loadROM("roms/test_opcode.ch8");
        // chip8.loadROM("roms/Paddles.ch8");
        // chip8.loadROM("roms/IBM Logo.ch8");
-       // chip8.loadROM("roms/Clock_Program.ch8");
+        chip8.loadROM("roms/Clock_Program.ch8");
        // chip8.loadROM("roms/Breakout.ch8");
-       // chip8.loadROM("roms/Astro_Dodge_Hires.ch8");
+       //chip8.loadROM("roms/Astro_Dodge_Hires.ch8");
+      // chip8.loadROM("roms/Space_Invaders.ch8");
         //chip8.loadROM("roms/SQRT_Test.ch8");
       // chip8.loadROM("roms/Pong.ch8");
        // chip8.loadROM("roms/Random_Number_Test.ch8");
        // chip8.loadROM("roms/tetris_mod.ch8");
-        chip8.loadROM("roms/tetris.ch8");
+       // chip8.loadROM("roms/tetris.ch8");
 
-        disassembler.disassembleFile("roms/tetris_mod.ch8", "disassembled_Tetris_mod.txt");
+        //disassembler.disassembleFile("roms/Astro_Dodge_Hires.ch8", "disassembled_Astro_Dodge_Hires.txt");
 
         return true;
     }
@@ -168,6 +169,7 @@ private:
             else if (GetKey(keyMap[i].kbrd).bReleased)
             {
                 chip8.keyEvent = KEY_RELEASED_EVENT;
+                chip8.pressedKey = keyMap[i].hexGrid;
                 break;
             }
         }
