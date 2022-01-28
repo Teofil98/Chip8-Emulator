@@ -142,7 +142,7 @@ std::string Disassembler::disassembleInstruction(uint16_t instruction)
         }
         else if (low_byte == 0x0A)
         {
-            sprintf(str_instruction, "SKP V%x, K", x);
+            sprintf(str_instruction, "LD V%x, K", x);
         }
         else if (low_byte == 0x15)
         {
